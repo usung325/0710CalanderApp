@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>31-Day Countdown with File-Based Notes</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        #grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            margin-top: 20px;
+        }
+        .cell {
+            width: 30px;
+            height: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 1px solid #ccc;
+            background-color: #f0f0f0;
+            cursor: pointer;
+        }
+        .today {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .passed {
+            background-color: #A5D6A7;
+        }
+        .selected {
+            border: 2px solid #000;
+        }
+        #noteArea {
+            margin-top: 20px;
+            width: 100%;
+            max-width: 300px;
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+        }
+    </style>
+</head>
+<body>
+    <h1>31-Day Countdown with File-Based Notes</h1>
+    <div id="currentDate"></div>
+    <div id="countdown"></div>
+    <div id="grid"></div>
+    <div id="noteArea">
+        <h3>Notes for <span id="selectedDate"></span></h3>
+        <textarea id="noteInput"></textarea>
+        <button onclick="saveNote()">Save Note</button>
+        <button onclick="loadNote()">Load Note</button>
+    </div>
+
+    <script>
+        let selectedDay = null;
+        const totalDays = 31;
+        const targetDate = new Date(2024, 7, 10); // August 10, 2024
+
+        function updateGrid() {
+            const today = new Date();
+            const currentDay = today.getDate();
+            
+            document.getElementById('currentDate').textContent = `Current date: ${today.toDateString()}`;
+
+            // Update countdown
+            const daysPassed = Math.floor((today - new Date(2024, 6, 10)) / (1000 * 60 * 60 * 24));
+            const daysRemaining = Math.max(0, Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24)));
+            document.getElementById('countdown').textContent = `Days passed: ${daysPassed}, Days remaining: ${daysRemaining}`;
+
+            const grid = document.getElementById('grid');
+            grid.innerHTML = '';
+
+            for (let i = 0; i < totalDays; i++) {
+                const cell = document.createElement('div');
+                cell.classList.add('cell');
+                let dayNumber = (currentDay + i - 1) % 31 + 1;
+                cell.textContent = dayNumber;
+                if (i === 0) {
+                    cell.classList.add('today');
+                } else if (i < 0) {
+                    cell.classList.add('passed');
+                }
+                cell.onclick = () => selectDay(i, dayNumber);
+                grid.appendChild(cell);
+            }
+        }
+
+        function selectDay(index, dayNumber) {
+            selectedDay = index;
+            const today = new Date();
+            const selectedDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() + index);
+            document.getElementById('selectedDate').textContent = selectedDate.toDateString();
+            
+            // Remove previous selection
+            document.querySelectorAll('.cell').forEach(cell => cell.classList.remove('selected'));
+            // Add selection to clicked cell
+            document.querySelectorAll('.cell')[index].classList.add('selected');
+
+            // Clear the note input area
+            document.getElementById('noteInput').value = '';
+        }
+
+        async function saveNote() {
+            if (selectedDay !== null) {
+                const note = document.getElementById('noteInput').value;
+                const dayNumber = parseInt(document.querySelectorAll('.cell')[selectedDay].textContent);
+                const fileName = `note_${dayNumber}.txt`;
+
+                try {
+                    const handle = await window.showSaveFilePicker({
+                        suggestedName: fileName,
+                        types: [{
+                            description: 'Text Files',
+                            accept: {'text/plain': ['.txt']},
+                        }],
+                    });
+                    const writable = await handle.createWritable();
+                    await writable.write(note);
+                    await writable.close();
+                    alert('Note saved successfully!');
+                } catch (err) {
+                    console.error('Failed to save the file:', err);
+                    alert('Failed to save the note. Please try again.');
+                }
+            } else {
+                alert('Please select a day first.');
+            }
+        }
+
+        async function loadNote() {
+            try {
+                const [fileHandle] = await window.showOpenFilePicker({
+                    types: [{
+                        description: 'Text Files',
+                        accept: {'text/plain': ['.txt']},
+                    }],
+                    multiple: false
+                });
+                const file = await fileHandle.getFile();
+                const contents = await file.text();
+                document.getElementById('noteInput').value = contents;
+            } catch (err) {
+                console.error('Failed to load the file:', err);
+                alert('Failed to load the note. Please try again.');
+            }
+        }
+
+        // Call updateGrid when the page loads
+        window.onload = updateGrid;
+    </script>
+</body>
+</html>
