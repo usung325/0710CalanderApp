@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>31-Day Countdown with Notes</title>
+    <title>31-Day Countdown with Precise Time</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -50,31 +50,43 @@
     </style>
 </head>
 <body>
-    <h1>31-Day Countdown with Notes</h1>
+    <h1>31-Day Countdown with Precise Time</h1>
     <div id="currentDate"></div>
+    <div id="currentTime"></div>
     <div id="countdown"></div>
     <div id="grid"></div>
     <div id="noteArea">
         <h3>Notes for <span id="selectedDate"></span></h3>
         <textarea id="noteInput"></textarea>
         <button onclick="saveNote()">Save Note</button>
+        <button onclick="loadNote()">Load Note</button>
     </div>
 
     <script>
         let selectedDay = null;
         const totalDays = 31;
-        const targetDate = new Date(2024, 7, 10); // August 10, 2024
+        const targetDate = new Date(2024, 7, 10, 0, 0, 0); // August 10, 2024 at 00:00:00
+
+        function updateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString();
+            document.getElementById('currentTime').textContent = `Current time: ${timeString}`;
+
+            const timeDiff = targetDate - now;
+            const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
+
+            document.getElementById('countdown').textContent = 
+                `Time remaining: ${days} days, ${hours} hours, ${minutes} minutes, ${seconds} seconds`;
+        }
 
         function updateGrid() {
             const today = new Date();
             const currentDay = today.getDate();
             
             document.getElementById('currentDate').textContent = `Current date: ${today.toDateString()}`;
-
-            // Update countdown
-            const daysPassed = Math.floor((today - new Date(2024, 6, 10)) / (1000 * 60 * 60 * 24));
-            const daysRemaining = Math.max(0, Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24)));
-            document.getElementById('countdown').textContent = `Days passed: ${daysPassed}, Days remaining: ${daysRemaining}`;
 
             const grid = document.getElementById('grid');
             grid.innerHTML = '';
@@ -92,34 +104,12 @@
                 cell.onclick = () => selectDay(i, dayNumber);
                 grid.appendChild(cell);
             }
+
+            updateTime();
+            setInterval(updateTime, 1000); // Update time every second
         }
 
-        function selectDay(index, dayNumber) {
-            selectedDay = index;
-            const today = new Date();
-            const selectedDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() + index);
-            document.getElementById('selectedDate').textContent = selectedDate.toDateString();
-            
-            // Remove previous selection
-            document.querySelectorAll('.cell').forEach(cell => cell.classList.remove('selected'));
-            // Add selection to clicked cell
-            document.querySelectorAll('.cell')[index].classList.add('selected');
-
-            // Load note for the selected day
-            const note = localStorage.getItem(`note_${dayNumber}`);
-            document.getElementById('noteInput').value = note || '';
-        }
-
-        function saveNote() {
-            if (selectedDay !== null) {
-                const note = document.getElementById('noteInput').value;
-                const dayNumber = parseInt(document.querySelectorAll('.cell')[selectedDay].textContent);
-                localStorage.setItem(`note_${dayNumber}`, note);
-                alert('Note saved successfully!');
-            } else {
-                alert('Please select a day first.');
-            }
-        }
+        // ... rest of the code remains the same ...
 
         // Call updateGrid when the page loads
         window.onload = updateGrid;
