@@ -84,24 +84,27 @@
 
         function updateGrid() {
             const today = new Date();
+            const startDate = new Date(2024, 6, 10);
             const currentDay = today.getDate();
+            const startDay = startDate.getDate();
             
             document.getElementById('currentDate').textContent = `Current date: ${today.toDateString()}`;
 
             const grid = document.getElementById('grid');
             grid.innerHTML = '';
 
-            for (let i = 0; i < totalDays; i++) {
+            for (let i = 0 + 10; i < totalDays + 10; i++) {
                 const cell = document.createElement('div');
                 cell.classList.add('cell');
-                let dayNumber = (currentDay + i - 1) % 31 + 1;
+                let dayNumber = (startDay + i - 10 - 1) % 31 + 1 ;
                 cell.textContent = dayNumber;
-                if (i === 0) {
+                if (i === currentDay) {
                     cell.classList.add('today');
-                } else if (i < 0) {
+                    console.log(currentDay);
+                } else if (i < currentDay) {
                     cell.classList.add('passed');
                 }
-                cell.onclick = () => selectDay(i, dayNumber);
+                cell.onclick = () => selectDay(i - 10, dayNumber);
                 grid.appendChild(cell);
             }
 
@@ -112,7 +115,7 @@
         function selectDay(index, dayNumber) {
             selectedDay = index;
             const today = new Date();
-            const selectedDate = new Date(today.getFullYear(), today.getMonth(), today.getDate() + index);
+            const selectedDate = new Date(today.getFullYear(), today.getMonth(), dayNumber);
             document.getElementById('selectedDate').textContent = selectedDate.toDateString();
             
             // Remove previous selection
